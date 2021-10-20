@@ -1,0 +1,1 @@
+rootProject.name = "teamsykmelding-auth-fss-proxy"
