@@ -36,5 +36,6 @@ spec:
   vault:
     enabled: false
   ingresses:
-    - ""
+    - "https://teamsykmelding-auth-fss-proxy.intern.nav.no"
+    - "https://teamsykmelding-auth-fss-proxy.prod-fss-pub.nais.io"
   webproxy: true
