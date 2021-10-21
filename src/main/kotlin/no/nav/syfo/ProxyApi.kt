@@ -19,7 +19,7 @@ import no.nav.syfo.client.StsOidcClient
 import java.net.URI
 
 fun Route.registerProxyApi(oidcClient: StsOidcClient, httpClient: HttpClient, proxyMapping: Map<String, URI>) {
-    get("/*") {
+    get("/{...}") {
         val proxyApi = call.request.path().split("/")[1]
         val proxyPath = call.request.uri.substring(proxyApi.length + 1)
         if (proxyMapping.containsKey(proxyApi)) {
