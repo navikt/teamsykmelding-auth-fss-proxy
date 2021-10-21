@@ -8,24 +8,24 @@ metadata:
 spec:
   image: {{ image }}
   replicas:
-    min: 2
+    min: 1
     max: 2
     cpuThresholdPercentage: 90
   port: 8080
   liveness:
-    path: /is_alive
+    path: /internal/is_alive
     initialDelay: 10
     timeout: 5
     periodSeconds: 5
     failureThreshold: 30
   readiness:
-    path: /is_ready
+    path: /internal/is_ready
     initialDelay: 30
     periodSeconds: 5
     timeout: 5
   prometheus:
     enabled: true
-    path: /prometheus
+    path: /internal/prometheus
   resources:
     limits:
       cpu: 500m
@@ -33,9 +33,25 @@ spec:
     requests:
       cpu: 400m
       memory: 768Mi
+  azure:
+    application:
+      enabled: true
+      tenant: trygdeetaten.no
+  accessPolicy:
+    inbound:
+      rules:
+        - application: dinesykmeldte-backend
+          namespace: teamsykmelding
+          cluster: dev-gcp
   vault:
-    enabled: false
+    enabled: true
+    paths:
+      - kvPath: serviceuser/data/dev/srvsykmauthfssproxy
+        mountPath: /secrets/serviceuser
   ingresses:
     - "https://teamsykmelding-auth-fss-proxy.dev.intern.nav.no"
     - "https://teamsykmelding-auth-fss-proxy.dev-fss-pub.nais.io"
   webproxy: true
+  env:
+    - name: PROXY_SYFOSYKETILFELLE
+      value: http://syfosyketilfelle.flex
