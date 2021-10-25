@@ -2,6 +2,7 @@ package no.nav.syfo
 
 import io.ktor.application.call
 import io.ktor.client.HttpClient
+import io.ktor.client.features.ResponseException
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readBytes
@@ -27,12 +28,22 @@ fun Route.registerProxyApi(oidcClient: StsOidcClient, httpClient: HttpClient, pr
             val url = proxyMapping[proxyApi].toString() + proxyPath
             val oidcToken = oidcClient.oidcToken()
             log.info("Videresender til $url")
-            val response = httpClient.get<HttpResponse>(urlString = url) {
-                headers.appendAll(proxyHeaders)
-                headers.append(HttpHeaders.Authorization, "Bearer ${oidcToken.access_token}")
+            try {
+                val response = httpClient.get<HttpResponse>(urlString = url) {
+                    headers.appendAll(proxyHeaders)
+                    headers.append(HttpHeaders.Authorization, "Bearer ${oidcToken.access_token}")
+                }
+                log.info("Mottok svar med kode ${response.status}")
+                call.respondBytes(contentType = response.contentType(), status = response.status, bytes = response.readBytes())
+            } catch (e: Exception) {
+                if (e is ResponseException) {
+                    log.warn("Mottok feilkode fra api: ${e.response.status}")
+                    call.respond(e.response.status, e.response.content)
+                } else {
+                    log.error("Noe gikk galt", e)
+                    throw e
+                }
             }
-            log.info("Mottok svar med kode ${response.status}")
-            call.respondBytes(contentType = response.contentType(), status = response.status, bytes = response.readBytes())
         } else {
             call.respond(HttpStatusCode.BadGateway, "Application $proxyApi not configured")
         }

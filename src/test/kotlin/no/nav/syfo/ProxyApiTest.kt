@@ -40,6 +40,7 @@ import no.nav.syfo.client.OidcToken
 import no.nav.syfo.client.StsOidcClient
 import no.nav.syfo.util.generateJWT
 import org.amshove.kluent.shouldBeEqualTo
+import org.amshove.kluent.shouldBeInstanceOf
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.net.ServerSocket
@@ -84,6 +85,9 @@ class ProxyApiTest : Spek({
             }
             get("/error") {
                 call.respond(HttpStatusCode.InternalServerError)
+            }
+            get("/error-client") {
+                call.respond(HttpStatusCode.BadRequest)
             }
             get("") {
                 call.respond(HttpStatusCode.OK, GeneriskRespons(call.request.headers["Sykmeldt-Fnr"]!!))
@@ -194,9 +198,9 @@ class ProxyApiTest : Spek({
                 response.readText() shouldBeEqualTo "OK + 1 + 2"
             }
         }
-        it("Videresender feilrespons") {
-            assertFailsWith<ServerResponseException> {
-                runBlocking {
+        it("Videresender feilrespons (server)") {
+            runBlocking {
+                try {
                     httpClient.get<HttpResponse>("$mockHttpServerUrlProxyApp/test-api/error") {
                         headers.append("Sykmeldt-Fnr", "1234")
                         headers.append(
@@ -208,6 +212,29 @@ class ProxyApiTest : Spek({
                             )}"
                         )
                     }
+                } catch (e: Exception) {
+                    e shouldBeInstanceOf ServerResponseException::class.java
+                    (e as ServerResponseException).response.status shouldBeEqualTo HttpStatusCode.InternalServerError
+                }
+            }
+        }
+        it("Videresender feilrespons (client)") {
+            runBlocking {
+                try {
+                    httpClient.get<HttpResponse>("$mockHttpServerUrlProxyApp/test-api/error-client") {
+                        headers.append("Sykmeldt-Fnr", "1234")
+                        headers.append(
+                            HttpHeaders.Authorization,
+                            "Bearer ${generateJWT(
+                                consumerClientId = "dinesykmeldte-backend",
+                                audience = "teamsykmelding-auth-fss-proxy",
+                                issuer = issuer
+                            )}"
+                        )
+                    }
+                } catch (e: Exception) {
+                    e shouldBeInstanceOf ClientRequestException::class.java
+                    (e as ClientRequestException).response.status shouldBeEqualTo HttpStatusCode.BadRequest
                 }
             }
         }
