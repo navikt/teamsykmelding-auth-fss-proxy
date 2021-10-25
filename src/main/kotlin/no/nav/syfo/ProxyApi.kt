@@ -26,10 +26,12 @@ fun Route.registerProxyApi(oidcClient: StsOidcClient, httpClient: HttpClient, pr
             val proxyHeaders = call.request.headers.filter { key, _ -> !HttpHeaders.isUnsafe(key) && key != HttpHeaders.Authorization }
             val url = proxyMapping[proxyApi].toString() + proxyPath
             val oidcToken = oidcClient.oidcToken()
+            log.info("Videresender til $url")
             val response = httpClient.get<HttpResponse>(urlString = url) {
                 headers.appendAll(proxyHeaders)
                 headers.append(HttpHeaders.Authorization, "Bearer ${oidcToken.access_token}")
             }
+            log.info("Mottok svar med kode ${response.status}")
             call.respondBytes(contentType = response.contentType(), status = response.status, bytes = response.readBytes())
         } else {
             call.respond(HttpStatusCode.BadGateway, "Application $proxyApi not configured")
