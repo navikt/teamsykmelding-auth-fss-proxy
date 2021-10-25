@@ -22,7 +22,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.jackson.jackson
 import io.ktor.response.respond
-import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
@@ -85,10 +84,8 @@ fun createApplicationEngine(
 
         routing {
             registerNaisApi(applicationState)
-            route("/api") {
-                authenticate("servicebrukerAAD") {
-                    registerProxyApi(oidcClient, httpClient, env.proxyMappings)
-                }
+            authenticate("servicebrukerAAD") {
+                registerProxyApi(oidcClient, httpClient, env.proxyMappings)
             }
         }
 
