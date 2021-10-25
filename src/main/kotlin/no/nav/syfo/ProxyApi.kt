@@ -38,7 +38,7 @@ fun Route.registerProxyApi(oidcClient: StsOidcClient, httpClient: HttpClient, pr
             } catch (e: Exception) {
                 if (e is ResponseException) {
                     log.warn("Mottok feilkode fra api: ${e.response.status}")
-                    call.respond(e.response.status, e.response.content)
+                    call.respond(e.response.status)
                 } else {
                     log.error("Noe gikk galt", e)
                     throw e
